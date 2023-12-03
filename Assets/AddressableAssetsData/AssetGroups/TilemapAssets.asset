@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: TilemapAssets
+  m_EditorClassIdentifier: 
+  m_GroupName: TilemapAssets
+  m_Data:
+    m_SerializedData: []
+  m_GUID: d40c6218c79703449acceee992d17587
+  m_SerializeEntries:
+  - m_GUID: f4b57d4e30af9f14780e89e666d00e6e
+    m_Address: Path
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - default
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d68a65530ee64e14091d0effd4ec90a5
+    m_Address: Wall
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - default
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 2a20435130374e24995a966c1a51c04b, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 7b18141f53f666949b108466eb82fbed, type: 2}
+    - {fileID: 11400000, guid: 0bc9af81dae0b094682bb38d19b6a8af, type: 2}
