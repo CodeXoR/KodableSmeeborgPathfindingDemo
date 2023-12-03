@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Tilemaps;
 
-namespace MazeCreator
+namespace MazeCreator.ScriptableObjects
 {
     /// <summary>
     /// This is an abstract scriptable object that holds data about what tiles are used by the program

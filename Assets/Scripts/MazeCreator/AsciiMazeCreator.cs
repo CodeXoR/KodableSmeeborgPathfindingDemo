@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
+using MazeCreator.Interfaces;
+using MazeCreator.ScriptableObjects;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
 namespace MazeCreator
 {
-    public class AsciiMazeCreator : IMazeCreator, IWalkableGrid
+    public class AsciiMazeCreator : IMazeCreator, IGrid
     {
         // maze creator uses Unity tilemap system for better overall performance
         private readonly Tilemap _tilemap;
@@ -12,11 +14,11 @@ namespace MazeCreator
         
         // cached char to string conversion to avoid creating new strings for the same characters 
         private readonly Dictionary<char, string> _charToStringMap = new();
-        private bool _isStartCoordsSet;
+        private bool _isFirstWalkableNodeSet;
 
-        public IList<IList<bool>> WalkableMap { get; } = new List<IList<bool>>();
-        public Vector2Int StartCoords { get; private set; }
-        public Vector2Int EndCoords { get; private set; }
+        public IList<IList<PathNode>> Grid { get; } = new List<IList<PathNode>>();
+        public PathNode FirstWalkableNode { get; private set; }
+        public PathNode LastWalkableNode { get; private set; }
 
         public AsciiMazeCreator(Tilemap tilemap, TileConfig tileConfig)
         {
@@ -40,7 +42,7 @@ namespace MazeCreator
             var row = 0;
             var column = 0;
             
-            WalkableMap.Add(new List<bool>());
+            Grid.Add(new List<PathNode>());
 
             for (var charIndex = 0; charIndex < mazeInfo.Length; charIndex++)
             {
@@ -54,7 +56,7 @@ namespace MazeCreator
                     case '\n':
                         row++;
                         column = 0;
-                        WalkableMap.Add(new List<bool>());
+                        Grid.Add(new List<PathNode>());
                         continue;
                 }
 
@@ -62,27 +64,25 @@ namespace MazeCreator
 
                 var tileId = _charToStringMap[mazeElement];
                 var tile = _tileConfig.GetTile(tileId);
+                var isTileWalkable = _tileConfig.IsTileWalkable(tileId);
+
+                var pathNode = new PathNode(column, row, isTileWalkable);
+                Grid[row].Add(pathNode);
                 
                 // tilemap coordinates go bottom up, in order to render tiles top to bottom, row coordinate is negated
-                var tileCoords = new Vector3Int(column, -row);
-                
-                _tilemap.SetTile(tileCoords, tile);
-
-                var isTileWalkable = _tileConfig.IsTileWalkable(tileId);
-                WalkableMap[row].Add(isTileWalkable);
+                _tilemap.SetTile(new Vector3Int(column, -row), tile);
                 
                 // pre-emptive checking of first and last walkable tile
                 // first walkable tile from the top-left corner would be the starting point of the maze
                 // last walkable tile from the bottom-right corner would be the end point of the maze
                 if (isTileWalkable)
                 {
-                    var gridCoords = (Vector2Int)tileCoords;
-                    EndCoords = gridCoords;
+                    LastWalkableNode = pathNode;
 
-                    if (_isStartCoordsSet == false)
+                    if (_isFirstWalkableNodeSet == false)
                     {
-                        _isStartCoordsSet = true;
-                        StartCoords = gridCoords;
+                        _isFirstWalkableNodeSet = true;
+                        FirstWalkableNode = pathNode;
                     }
                 }
                 

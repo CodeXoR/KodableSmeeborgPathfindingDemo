@@ -1,7 +1,8 @@
 ﻿using System.Collections;
 using CameraControls;
 using MazeCreator;
-using Pathfinding;
+using MazeCreator.Interfaces;
+using MazeCreator.ScriptableObjects;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Tilemaps;
@@ -49,6 +50,10 @@ public class SmeeborgPathfindingDemo : MonoBehaviour
         // coroutine will wait for both maze config load and tile config init to complete
         yield return new WaitUntil(() => mazeConfigLoadTask.IsCompleted && tileConfigInitTask.IsCompleted);
         
+        // for better modularity and testability,
+        // the following code setup is following an inversion of control pattern through dependency injection
+        // dependencies are set via constructor injection
+        
         // following the dependency inversion principle, demo depends on abstractions
         // instead of any concrete implementation reference. This enables us to easily and safely swap out 
         // different implementations, either for testing or extending the features of the default maze creator
@@ -59,20 +64,21 @@ public class SmeeborgPathfindingDemo : MonoBehaviour
         // release maze layout text asset once done with maze setup
         mazeLayout.ReleaseAsset();
 
-        ICameraControls cameraControls = new TilemapOrthoCameraControls(gameCamera, tilemap);
+        ICameraControls cameraControls = new TilemapOrthoCameraControls(gameCamera, tilemap); 
 
         // implemented centering of maze world bounds for better viewing experience
         // added 10% padding along the longer world bound
         var cameraSetupTask = cameraControls.CenterToWorldBounds(viewScaleModifier: 1.1f);
         
         yield return new WaitUntil(() => cameraSetupTask.IsCompleted);
-
-        //IPathfinding pathfinding = new AStarSearchPathfinding();
         
-        //var path = pathfinding.FindPath()
+        var grid = (IGrid)mazeCreator;
+        IPathfinding pathfinding = new AStarSearchPathfinding(grid, new DiagonalDistanceCalculator(), new EightDirectionalNodeNeighborFinder(grid));
+        var path = pathfinding.FindPath(grid.FirstWalkableNode, grid.LastWalkableNode);
 
-        var walkableGrid = (IWalkableGrid)mazeCreator;
+        // tilemap coordinates go bottom up, y coordinate is inverted to get correct tilemap coordinates
+        player.transform.position = tilemap.GetCellCenterWorld(new Vector3Int(grid.FirstWalkableNode.x, -grid.FirstWalkableNode.y));
         
-        player.transform.position = tilemap.GetCellCenterWorld((Vector3Int)walkableGrid.StartCoords);
+        
     }
 }

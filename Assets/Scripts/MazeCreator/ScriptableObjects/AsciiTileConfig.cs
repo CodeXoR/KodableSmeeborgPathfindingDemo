@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace MazeCreator
+namespace MazeCreator.ScriptableObjects
 {
     [CreateAssetMenu(fileName = "AsciiTileConfig", menuName = "TileConfig/AsciiTileConfig", order = 0)]
     public class AsciiTileConfig : TileConfig
