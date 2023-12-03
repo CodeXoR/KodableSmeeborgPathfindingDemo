@@ -20,6 +20,8 @@ MonoBehaviour:
     - '-'
     - '|'
     tileKeyMap: Wall
+    walkable: 0
   - ids:
     - ' '
     tileKeyMap: Path
+    walkable: 1

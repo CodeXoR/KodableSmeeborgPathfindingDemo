@@ -13,6 +13,7 @@ namespace MazeCreator
         {
             public List<string> ids;
             public string tileKeyMap;
+            public bool walkable;
         }
         
         // implemented an inspector editable data object here for mapping ascii tile ids
@@ -22,6 +23,7 @@ namespace MazeCreator
         // would require editing this script if some values needed to be updated
         public List<TileIdData> tileIdData;
         private readonly Dictionary<string, string> _tileKeyMap = new();
+        private readonly Dictionary<string, bool> _tileTraversalMap = new();
 
         public override async Task Init()
         {
@@ -35,12 +37,18 @@ namespace MazeCreator
                 {
                     var id = tileIds[j];
                     _tileKeyMap.TryAdd(id, tileKeyMap);
+                    _tileTraversalMap.TryAdd(id, tileData.walkable);
                 }
             }
             
             await base.Init();
         }
-        
+
+        public override bool IsTileWalkable(string tileId)
+        {
+            return _tileTraversalMap.TryGetValue(tileId, out var isTileWalkable) ? isTileWalkable : default;
+        }
+
         protected override string GetTileKey(string tileId)
         {
             return _tileKeyMap.TryGetValue(tileId, out var tileKey) ? tileKey : default;

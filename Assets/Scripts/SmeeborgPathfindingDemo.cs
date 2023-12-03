@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using CameraControls;
 using MazeCreator;
+using Pathfinding;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Tilemaps;
@@ -14,6 +15,8 @@ public class SmeeborgPathfindingDemo : MonoBehaviour
     // using an indirect reference here of the maze text layout as an addressable
     // to implement on demand loading leveraging the addressables api
     [SerializeField] private AssetReferenceT<TextAsset> mazeLayout;
+
+    public GameObject player;
     
     private IEnumerator Start()
     {
@@ -63,5 +66,13 @@ public class SmeeborgPathfindingDemo : MonoBehaviour
         var cameraSetupTask = cameraControls.CenterToWorldBounds(viewScaleModifier: 1.1f);
         
         yield return new WaitUntil(() => cameraSetupTask.IsCompleted);
+
+        //IPathfinding pathfinding = new AStarSearchPathfinding();
+        
+        //var path = pathfinding.FindPath()
+
+        var walkableGrid = (IWalkableGrid)mazeCreator;
+        
+        player.transform.position = tilemap.GetCellCenterWorld((Vector3Int)walkableGrid.StartCoords);
     }
 }

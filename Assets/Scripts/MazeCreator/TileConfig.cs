@@ -48,6 +48,8 @@ namespace MazeCreator
         {
             return TileSetMap.TryGetValue(GetTileKey(tileId), out var mappedTile) ? mappedTile : default;
         }
+        
+        public abstract bool IsTileWalkable(string tileId);
 
         /// <summary>
         /// Converts a tile id to a tile key mapped in loaded tileset
