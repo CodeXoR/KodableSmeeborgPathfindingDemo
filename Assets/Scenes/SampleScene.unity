@@ -529,12 +529,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gameCamera: {fileID: 519420031}
   tilemap: {fileID: 348224377}
+  tileConfig: {fileID: 11400000, guid: 59c9891c503638c489362a8a33141c0d, type: 2}
   mazeLayout:
     m_AssetGUID: c96e1a7741b4215429167a9afe646191
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 0
-  aTileConfig: {fileID: 11400000, guid: 59c9891c503638c489362a8a33141c0d, type: 2}
 --- !u!4 &1031686507
 Transform:
   m_ObjectHideFlags: 0
