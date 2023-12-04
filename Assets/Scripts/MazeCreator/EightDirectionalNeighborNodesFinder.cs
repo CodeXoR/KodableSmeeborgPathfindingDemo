@@ -3,13 +3,13 @@ using MazeCreator.Interfaces;
 
 namespace MazeCreator
 {
-    public class EightDirectionalNodeNeighborFinder : IPathNodeNeighborFinder
+    public class EightDirectionalNeighborNodesFinder : IPathNodeNeighborFinder
     {
         private readonly IGrid _grid;
         // cached list container for holding current node neighbors
         private readonly List<PathNode> _currentNodeNeighborList = new();
 
-        public EightDirectionalNodeNeighborFinder(IGrid grid)
+        public EightDirectionalNeighborNodesFinder(IGrid grid)
         {
             _grid = grid;
         }

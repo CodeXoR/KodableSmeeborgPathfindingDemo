@@ -3,6 +3,8 @@ using CameraControls;
 using MazeCreator;
 using MazeCreator.Interfaces;
 using MazeCreator.ScriptableObjects;
+using PlayerAnimator;
+using PlayerAnimator.Interfaces;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Tilemaps;
@@ -18,6 +20,9 @@ public class SmeeborgPathfindingDemo : MonoBehaviour
     [SerializeField] private AssetReferenceT<TextAsset> mazeLayout;
 
     public GameObject player;
+    public SpriteRenderer playerRenderer;
+    public Animator playerAnimator;
+    public float playerMoveSpeed;
     
     private IEnumerator Start()
     {
@@ -72,13 +77,36 @@ public class SmeeborgPathfindingDemo : MonoBehaviour
         
         yield return new WaitUntil(() => cameraSetupTask.IsCompleted);
         
+        // pathfinding
         var grid = (IGrid)mazeCreator;
-        IPathfinding pathfinding = new AStarSearchPathfinding(grid, new DiagonalDistanceCalculator(), new EightDirectionalNodeNeighborFinder(grid));
+        IPathfinding pathfinding = new AStarSearchPathfinding(grid, new DiagonalDistanceCalculator(), new EightDirectionalNeighborNodesFinder(grid));
         var path = pathfinding.FindPath(grid.FirstWalkableNode, grid.LastWalkableNode);
 
+        var playerTransform = player.transform;
         // tilemap coordinates go bottom up, y coordinate is inverted to get correct tilemap coordinates
-        player.transform.position = tilemap.GetCellCenterWorld(new Vector3Int(grid.FirstWalkableNode.x, -grid.FirstWalkableNode.y));
+        playerTransform.position = tilemap.GetCellCenterWorld(new Vector3Int(grid.FirstWalkableNode.x, -grid.FirstWalkableNode.y));
+
+        if(path == null) yield break;
         
-        
+        // player movement
+        IPlayerAnimator animator = new AstroBlueAnimator(playerAnimator, playerRenderer);
+        var startNode = grid.FirstWalkableNode;
+        const float distanceCheckTolerance = 0.05f;
+        for (var i = path.Count - 1; i >= 0; i--)
+        {
+            var targetNode = path[i];
+            var targetPosition = tilemap.GetCellCenterWorld(new Vector3Int(targetNode.x, -targetNode.y));
+            animator.UpdateAnimation(startNode.x - targetNode.x, startNode.y - targetNode.y);
+            
+            while (Vector3.Distance(playerTransform.position, targetPosition) > distanceCheckTolerance)
+            {
+                playerTransform.position = Vector3.MoveTowards(playerTransform.position, targetPosition, Time.deltaTime * playerMoveSpeed);
+
+                yield return null;
+            }
+
+            startNode = targetNode;
+        }
+        animator.EndAnimation();
     }
 }
