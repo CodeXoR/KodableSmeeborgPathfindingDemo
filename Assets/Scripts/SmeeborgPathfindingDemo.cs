@@ -17,6 +17,7 @@ public class SmeeborgPathfindingDemo : MonoBehaviour
     public GameObject endMarker;
     
     [SerializeField] private Camera gameCamera;
+    // using a tilemap for the maze instead of 2D sprite objects for better overall performance
     [SerializeField] private Tilemap tilemap;
     [SerializeField] private TileConfig tileConfig;
     // using an indirect reference here of the player prefab and maze text layout as addressables
