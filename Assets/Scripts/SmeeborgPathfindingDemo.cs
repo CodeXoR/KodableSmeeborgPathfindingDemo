@@ -19,24 +19,24 @@ public class SmeeborgPathfindingDemo : MonoBehaviour
     [SerializeField] private Camera gameCamera;
     [SerializeField] private Tilemap tilemap;
     [SerializeField] private TileConfig tileConfig;
-    [SerializeField] private AssetReferenceT<GameObject> playerPrefab;
-    // using an indirect reference here of the maze text layout as an addressable
+    // using an indirect reference here of the player prefab and maze text layout as addressables
     // to implement on demand loading leveraging the addressables api
+    [SerializeField] private AssetReferenceT<GameObject> playerPrefab;
     [SerializeField] private AssetReferenceT<TextAsset> mazeLayout;
 
     private IEnumerator Start()
     {
+        // the following code have some debug logs to display some helpful debugging info
+        // in an actual live game, a message popup can be shown instead for better feedback
+        
         if (gameCamera == null)
         {
             Debug.LogError("game camera is not set.");
             yield break;
         }
         
-        // doing a check if maze layout config is set
         // AssetReference type will always have an object reference even when not set in the inspector
         // to check if AssetReference is valid, the runtime key associated is checked for validity instead
-        // if config is not set a log is printed to display some helpful debugging info
-        // in an actual live game, a message popup can be shown instead for better feedback
         if (mazeLayout.RuntimeKeyIsValid() == false)
         {
             Debug.LogError("addressable maze layout config is invalid.");
