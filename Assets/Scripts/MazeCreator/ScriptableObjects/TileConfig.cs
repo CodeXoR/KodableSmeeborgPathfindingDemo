@@ -19,11 +19,11 @@ namespace MazeCreator.ScriptableObjects
         public List<string> tileGroups;
         
         // using concurrent dictionary here for safe setting of entries across multiple asynchronous calls
-        protected ConcurrentDictionary<string, Tile> TileSetMap;
+        protected ConcurrentDictionary<string, Tile> tileSetMap;
 
         public virtual async Task Init()
         {
-            TileSetMap = new ConcurrentDictionary<string, Tile>();
+            tileSetMap = new ConcurrentDictionary<string, Tile>();
             
             // enforced loading of only one tile family at a time here for simplicity
             // but this can be extended easily to multiple tile groups as needed
@@ -31,7 +31,7 @@ namespace MazeCreator.ScriptableObjects
                 tile =>
                 {
                     if(tile == null) return;
-                    TileSetMap.TryAdd(tile.name, tile);
+                    tileSetMap.TryAdd(tile.name, tile);
                 },
                 Addressables.MergeMode.Union,
                 false).Task;
@@ -46,7 +46,7 @@ namespace MazeCreator.ScriptableObjects
         /// <returns></returns>
         public Tile GetTile(string tileId)
         {
-            return TileSetMap.TryGetValue(GetTileKey(tileId), out var mappedTile) ? mappedTile : default;
+            return tileSetMap.TryGetValue(GetTileKey(tileId), out var mappedTile) ? mappedTile : default;
         }
         
         public abstract bool IsTileWalkable(string tileId);

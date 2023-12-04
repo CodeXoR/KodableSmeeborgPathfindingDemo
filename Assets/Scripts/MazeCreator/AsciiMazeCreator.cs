@@ -14,7 +14,6 @@ namespace MazeCreator
         
         // cached char to string conversion to avoid creating new strings for the same characters 
         private readonly Dictionary<char, string> _charToStringMap = new();
-        private bool _isFirstWalkableNodeSet;
 
         public IList<IList<PathNode>> Grid { get; } = new List<IList<PathNode>>();
         public PathNode FirstWalkableNode { get; private set; }
@@ -72,18 +71,12 @@ namespace MazeCreator
                 // tilemap coordinates go bottom up, in order to render tiles top to bottom, row coordinate is negated
                 _tilemap.SetTile(new Vector3Int(column, -row), tile);
                 
-                // pre-emptive checking of first and last walkable tile
                 // first walkable tile from the top-left corner would be the starting point of the maze
                 // last walkable tile from the bottom-right corner would be the end point of the maze
                 if (isTileWalkable)
                 {
                     LastWalkableNode = pathNode;
-
-                    if (_isFirstWalkableNodeSet == false)
-                    {
-                        _isFirstWalkableNodeSet = true;
-                        FirstWalkableNode = pathNode;
-                    }
+                    FirstWalkableNode ??= pathNode;
                 }
                 
                 column++;

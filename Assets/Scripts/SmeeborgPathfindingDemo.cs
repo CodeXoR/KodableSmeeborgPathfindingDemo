@@ -3,29 +3,35 @@ using CameraControls;
 using MazeCreator;
 using MazeCreator.Interfaces;
 using MazeCreator.ScriptableObjects;
-using PlayerAnimator;
-using PlayerAnimator.Interfaces;
+using Player;
+using Player.Interfaces;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.Tilemaps;
 
 public class SmeeborgPathfindingDemo : MonoBehaviour
 {
+    // some helpful map markers for visualization
+    public GameObject startMarker;
+    public GameObject endMarker;
+    
     [SerializeField] private Camera gameCamera;
     [SerializeField] private Tilemap tilemap;
     [SerializeField] private TileConfig tileConfig;
-    
+    [SerializeField] private AssetReferenceT<GameObject> playerPrefab;
     // using an indirect reference here of the maze text layout as an addressable
     // to implement on demand loading leveraging the addressables api
     [SerializeField] private AssetReferenceT<TextAsset> mazeLayout;
 
-    public GameObject player;
-    public SpriteRenderer playerRenderer;
-    public Animator playerAnimator;
-    public float playerMoveSpeed;
-    
     private IEnumerator Start()
     {
+        if (gameCamera == null)
+        {
+            Debug.LogError("game camera is not set.");
+            yield break;
+        }
+        
         // doing a check if maze layout config is set
         // AssetReference type will always have an object reference even when not set in the inspector
         // to check if AssetReference is valid, the runtime key associated is checked for validity instead
@@ -33,19 +39,25 @@ public class SmeeborgPathfindingDemo : MonoBehaviour
         // in an actual live game, a message popup can be shown instead for better feedback
         if (mazeLayout.RuntimeKeyIsValid() == false)
         {
-            Debug.Log("maze layout config is invalid.");
+            Debug.LogError("addressable maze layout config is invalid.");
+            yield break;
+        }
+        
+        if (playerPrefab.RuntimeKeyIsValid() == false)
+        {
+            Debug.LogError("addressable player prefab is invalid.");
             yield break;
         }
 
         if (tilemap == null)
         {
-            Debug.Log("tilemap is not set.");
+            Debug.LogError("tilemap is not set.");
             yield break;
         }
         
         if (tileConfig == null)
         {
-            Debug.Log("tile config is not set.");
+            Debug.LogError("tile config is not set.");
             yield break;
         }
         
@@ -69,7 +81,7 @@ public class SmeeborgPathfindingDemo : MonoBehaviour
         // release maze layout text asset once done with maze setup
         mazeLayout.ReleaseAsset();
 
-        ICameraControls cameraControls = new TilemapOrthoCameraControls(gameCamera, tilemap); 
+        ICameraControls cameraControls = new TilemapOrthoCameraControls(gameCamera, tilemap);
 
         // implemented centering of maze world bounds for better viewing experience
         // added 10% padding along the longer world bound
@@ -77,30 +89,84 @@ public class SmeeborgPathfindingDemo : MonoBehaviour
         
         yield return new WaitUntil(() => cameraSetupTask.IsCompleted);
         
+        IGrid grid = (IGrid)mazeCreator;
+        
+        // tilemap coordinates go bottom up, y coordinate is inverted to get correct tilemap coordinates
+        var playerStartPosition = tilemap.GetCellCenterWorld(new Vector3Int(grid.FirstWalkableNode.x, -grid.FirstWalkableNode.y));
+        var playerEndPosition = tilemap.GetCellCenterWorld(new Vector3Int(grid.LastWalkableNode.x, -grid.LastWalkableNode.y));
+        
+        // set maze start marker
+        if (startMarker != null)
+        {
+            startMarker.transform.position = playerStartPosition;
+        }
+
+        // set maze end marker
+        if (endMarker != null)
+        {
+            endMarker.transform.position = playerEndPosition;
+        }
+        
+        // player spawn
+        var loadPlayerOp = Addressables.InstantiateAsync(playerPrefab, playerStartPosition, Quaternion.identity);
+        yield return loadPlayerOp;
+
+        if (loadPlayerOp.Status != AsyncOperationStatus.Succeeded)
+        {
+            Debug.LogError("loading of addressable player prefab had an error");
+            yield break;
+        }
+        
+        var playerInstance = loadPlayerOp.Result;
+
+        if (playerInstance == null)
+        {
+            Debug.LogError("player instance is null");
+            yield break;
+        }
+        
+        var player = playerInstance.GetComponent<PathfindingPlayer>();
+
+        if (player == null)
+        {
+            Debug.LogError("player instance PathfindingPlayer component is null");
+            yield break;
+        }
+        
+        // player animation
+        IPlayerAnimator animator = new AstroBlueAnimator(player.playerAnimator, player.playerRenderer);
+        animator.StartAnimation();
+        
         // pathfinding
-        var grid = (IGrid)mazeCreator;
         IPathfinding pathfinding = new AStarSearchPathfinding(grid, new DiagonalDistanceCalculator(), new EightDirectionalNeighborNodesFinder(grid));
         var path = pathfinding.FindPath(grid.FirstWalkableNode, grid.LastWalkableNode);
-
-        var playerTransform = player.transform;
-        // tilemap coordinates go bottom up, y coordinate is inverted to get correct tilemap coordinates
-        playerTransform.position = tilemap.GetCellCenterWorld(new Vector3Int(grid.FirstWalkableNode.x, -grid.FirstWalkableNode.y));
-
-        if(path == null) yield break;
+        
+        if (path == null)
+        {
+            // showing player end animation whenever there is no valid path for feedback
+            animator.EndAnimation();
+            Debug.LogError("there is no valid path to destination.");
+            yield break;
+        }
         
         // player movement
-        IPlayerAnimator animator = new AstroBlueAnimator(playerAnimator, playerRenderer);
+        var playerTransform = player.transform;
         var startNode = grid.FirstWalkableNode;
         const float distanceCheckTolerance = 0.05f;
+        
+        // traversing path in reverse since path returned by pathfinding is in reverse
         for (var i = path.Count - 1; i >= 0; i--)
         {
             var targetNode = path[i];
             var targetPosition = tilemap.GetCellCenterWorld(new Vector3Int(targetNode.x, -targetNode.y));
-            animator.UpdateAnimation(startNode.x - targetNode.x, startNode.y - targetNode.y);
+            
+            // player animation is updated based on 2D move direction and player speed
+            // player will shows run animation if player speed is >= 4f, walk animation otherwise
+            animator.UpdateAnimation(player.playerMoveSpeed, startNode.x - targetNode.x, startNode.y - targetNode.y);
             
             while (Vector3.Distance(playerTransform.position, targetPosition) > distanceCheckTolerance)
             {
-                playerTransform.position = Vector3.MoveTowards(playerTransform.position, targetPosition, Time.deltaTime * playerMoveSpeed);
+                playerTransform.position = Vector3.MoveTowards(playerTransform.position, targetPosition, Time.deltaTime * player.playerMoveSpeed);
 
                 yield return null;
             }
